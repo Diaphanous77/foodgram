@@ -34,7 +34,7 @@ services:
     image: diaphanous/foodgram_gateway
     env_file: .env
     ports:
-      - 7000:80
+      - 80:80
     volumes:
       - static:/staticfiles/
       - media:/app/media
