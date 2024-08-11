@@ -17,7 +17,7 @@ from users.models import Follow
 
 from .filters import RecipeFilter
 from .pagination import CustomPagination
-from .permissions import PermissionDenied, IsAuthorOrReadOnly
+from .permissions import IsAuthorOrReadOnly, PermissionDenied
 from .serializers import (BriefDescriptionRecipeSerializer,
                           CreateRecipesSerializer, FollowSerializer,
                           IngredientSerializer, RecipesSerializer,
