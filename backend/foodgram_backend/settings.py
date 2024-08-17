@@ -12,7 +12,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost', '158.160.2.164']
+ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost']
 
 
 INSTALLED_APPS = [

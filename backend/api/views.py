@@ -6,23 +6,23 @@ from django.urls import reverse
 from django.utils import baseconv
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser import views
+from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from users.models import Follow
 
 from .filters import RecipeFilter
 from .pagination import CustomPagination
-from .permissions import AccessDenied, IsAuthorOrReadOnly
-from .serializers import (CreateRecipesSerializer, FollowSerializer,
+from .permissions import IsAuthorOrReadOnly, PermissionDenied
+from .serializers import (BriefDescriptionRecipeSerializer,
+                          CreateRecipesSerializer, FollowSerializer,
                           IngredientSerializer, RecipesSerializer,
-                          ShortRecipeDescriptionSerializer, TagSerializer,
-                          UserSerializer, UserSetImageSerializer)
+                          TagSerializer, UserSerializer,
+                          UserSetImageSerializer)
 
 User = get_user_model()
 
@@ -48,10 +48,15 @@ class UserViewSet(views.UserViewSet):
     @action(detail=False, methods=['get'], )
     def subscriptions(self, request):
         queryset = self.get_queryset()
-        queryset = queryset.filter(following__follower=request.user)
+        queryset = queryset.filter(
+            following__follower=request.user
+        )
         pages = self.paginate_queryset(queryset)
-        serializer = FollowSerializer(pages, many=True,
-                                      context={"request": request})
+        serializer = FollowSerializer(
+            pages,
+            many=True,
+            context={"request": request}
+        )
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['post', 'delete'],)
@@ -140,15 +145,21 @@ class RecipesViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer, *args, **kwargs):
         user = self.request.user
         if user.is_anonymous:
-            raise AccessDenied()
+            raise PermissionDenied()
         serializer.save(author=self.request.user)
 
     def add_or_delete(self, model, pk, message, request):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_401_UNAUTHORIZED)
         user = request.user
-        recipe = get_object_or_404(Recipe, id=pk)
-        related_recipe = model.objects.filter(user=user, recipe=recipe)
+        recipe = get_object_or_404(
+            Recipe,
+            id=pk
+        )
+        related_recipe = model.objects.filter(
+            user=user,
+            recipe=recipe
+        )
 
         if request.method == 'POST':
             if related_recipe.exists():
@@ -160,7 +171,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
                 user=user,
                 recipe=recipe
             )
-            serializer = ShortRecipeDescriptionSerializer(recipe)
+            serializer = BriefDescriptionRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         if related_recipe.exists():

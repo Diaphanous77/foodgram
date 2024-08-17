@@ -3,10 +3,9 @@ import base64
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
-from rest_framework import serializers
-
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
+from rest_framework import serializers
 from users.models import Follow
 
 User = get_user_model()
@@ -23,8 +22,13 @@ class Base64ImageField(serializers.ImageField):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField(default=False)
-    avatar = Base64ImageField(required=False, allow_null=True)
+    is_subscribed = serializers.SerializerMethodField(
+        default=False
+    )
+    avatar = Base64ImageField(
+        required=False,
+        allow_null=True
+    )
 
     class Meta:
         model = User
@@ -78,10 +82,12 @@ class FollowSerializer(UserSerializer):
     def get_recipes(self, obj):
         request = self.context.get('request')
         limit = request.GET.get('recipes_limit')
-        recipes = Recipe.objects.filter(author=obj.id)
+        recipes = Recipe.objects.filter(
+            author=obj.id
+        )
         if limit:
             recipes = recipes[:int(limit)]
-        serializer = ShortRecipeDescriptionSerializer(
+        serializer = BriefDescriptionRecipeSerializer(
             recipes,
             many=True,
             read_only=True
@@ -109,10 +115,15 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    id = serializers.ReadOnlyField(source='ingredient.id')
-    name = serializers.ReadOnlyField(source='ingredient.name')
+    id = serializers.ReadOnlyField(
+        source='ingredient.id'
+    )
+    name = serializers.ReadOnlyField(
+        source='ingredient.name'
+    )
     measurement_unit = serializers.ReadOnlyField(
-        source='ingredient.measurement_unit')
+        source='ingredient.measurement_unit'
+    )
 
     class Meta:
         model = RecipeIngredient
@@ -138,7 +149,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return data
 
 
-class ShortRecipeDescriptionSerializer(serializers.ModelSerializer):
+class BriefDescriptionRecipeSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
 
     class Meta:
@@ -152,14 +163,25 @@ class ShortRecipeDescriptionSerializer(serializers.ModelSerializer):
 
 
 class RecipesSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    tags = TagSerializer(many=True, read_only=True)
+    author = UserSerializer(
+        read_only=True
+    )
+    tags = TagSerializer(
+        many=True,
+        read_only=True
+    )
     ingredients = RecipeIngredientSerializer(
-        many=True, read_only=True, source='recipe_ingredient')
-
+        many=True,
+        read_only=True,
+        source='recipe_ingredient'
+    )
     image = Base64ImageField()
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    is_favorited = serializers.SerializerMethodField(
+        read_only=True
+    )
+    is_in_shopping_cart = serializers.SerializerMethodField(
+        read_only=True
+    )
 
     def get_is_favorited(self, obj):
         return (
@@ -207,12 +229,20 @@ class CreateRecipesIngredientsSerializer(serializers.ModelSerializer):
 
 
 class CreateRecipesSerializer(serializers.ModelSerializer):
-    author = UserSerializer(read_only=True)
-    ingredients = CreateRecipesIngredientsSerializer(many=True)
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True
+    author = UserSerializer(
+        read_only=True
     )
-    image = Base64ImageField(required=True, allow_null=True)
+    ingredients = CreateRecipesIngredientsSerializer(
+        many=True
+    )
+    tags = serializers.PrimaryKeyRelatedField(
+        queryset=Tag.objects.all(),
+        many=True
+    )
+    image = Base64ImageField(
+        required=True,
+        allow_null=True
+    )
 
     class Meta:
         model = Recipe
