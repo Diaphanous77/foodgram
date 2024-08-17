@@ -3,9 +3,10 @@ import base64
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from rest_framework import serializers
+
 from recipes.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
-from rest_framework import serializers
 from users.models import Follow
 
 User = get_user_model()
@@ -80,9 +81,11 @@ class FollowSerializer(UserSerializer):
         recipes = Recipe.objects.filter(author=obj.id)
         if limit:
             recipes = recipes[:int(limit)]
-        serializer = BriefDescriptionRecipeSerializer(recipes,
-                                                      many=True,
-                                                      read_only=True)
+        serializer = ShortRecipeDescriptionSerializer(
+            recipes,
+            many=True,
+            read_only=True
+        )
         return serializer.data
 
     def get_recipes_count(self, obj):
@@ -135,7 +138,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         return data
 
 
-class BriefDescriptionRecipeSerializer(serializers.ModelSerializer):
+class ShortRecipeDescriptionSerializer(serializers.ModelSerializer):
     image = Base64ImageField()
 
     class Meta:

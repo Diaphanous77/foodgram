@@ -9,7 +9,7 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         return obj.author == request.user
 
 
-class PermissionDenied(APIException):
+class AccessDenied(APIException):
     status_code = status.HTTP_401_UNAUTHORIZED
     default_detail = 'Нет авторизации'
     default_code = 'Unauthorized'
