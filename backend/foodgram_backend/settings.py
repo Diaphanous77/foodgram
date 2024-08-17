@@ -12,7 +12,9 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost']
+CSRF_TRUSTED_ORIGINS = ['https://*.diapfoodgram.sytes.net']
+
+ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost', '158.160.2.164']
 
 
 INSTALLED_APPS = [
