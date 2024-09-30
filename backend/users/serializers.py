@@ -1,8 +1,8 @@
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from recipes.models import Recipe
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 
-from recipes.models import Recipe
 from users.models import Subscription, User
 
 
