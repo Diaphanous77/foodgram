@@ -1,5 +1,3 @@
-from api.pagination import MyPagination
-from api.permissions import IsAuthorOrAdminOrReadOnly
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
@@ -8,6 +6,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from api.pagination import MyPagination
+from api.permissions import IsAuthorOrAdminOrReadOnly
 from users.models import Subscription, User
 from users.serializers import (UserGetSerializer, UserPostSerializer,
                                UserWithRecipesSerializer)
