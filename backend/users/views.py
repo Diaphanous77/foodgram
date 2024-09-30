@@ -1,15 +1,16 @@
-from rest_framework import viewsets, status, mixins
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
-from users.models import User, Subscription
-from users.serializers import (UserPostSerializer, UserGetSerializer,
-                               UserWithRecipesSerializer)
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from api.pagination import MyPagination
 from api.permissions import IsAuthorOrAdminOrReadOnly
+from users.models import Subscription, User
+from users.serializers import (UserGetSerializer, UserPostSerializer,
+                               UserWithRecipesSerializer)
 
 
 class UserViewSet(mixins.CreateModelMixin,
