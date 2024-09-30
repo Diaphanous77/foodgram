@@ -1,49 +1,49 @@
 from django.contrib import admin
-
-from .models import (Favorite, Ingredient, Recipe, RecipeIngredient,
-                     ShoppingCart, Tag)
-
-
-@admin.register(Recipe)
-class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'author', 'cooking_time', 'count_favorite_recipes')
-    list_filter = ('name', 'author', 'tags',)
-    search_fields = ('name', 'author', 'tags',)
-    empty_value_display = '-пусто-'
-
-    def count_favorite_recipes(self, obj):
-        return obj.favorit_recipes.count()
+from django.contrib.auth.models import Group
+from .models import (Ingredient,
+                     Tag,
+                     Recipe,
+                     IngredientInRecipe,
+                     Favorite, ShopList)
 
 
-@admin.register(Favorite)
+class IngredientsInLine(admin.TabularInline):
+    model = Recipe.ingredients.through
+
+
+class IngredientAdmin(admin.ModelAdmin):
+    list_display = ('pk', 'name', 'measurement_unit')
+
+
+class IngredienInRecipeAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'ingredient', 'amount')
+
+
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe')
-    list_filter = ('user', 'recipe')
 
 
-@admin.register(Ingredient)
-class IngredientAdmin(admin.ModelAdmin):
-    list_display = ('name', 'measurement_unit')
-    list_filter = ('name', 'measurement_unit')
-    search_fields = ('name',)
-    empty_value_display = '-пусто-'
-
-
-@admin.register(RecipeIngredient)
-class RecipeIngredientAdmin(admin.ModelAdmin):
-    list_display = ('recipe', 'ingredient', 'amount')
-    list_filter = ('recipe', 'ingredient', 'amount')
-
-
-@admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug')
-    list_filter = ('name', 'slug')
-    search_fields = ('name', 'slug')
-    empty_value_display = '-пусто-'
+    list_display = ('pk', 'name', 'slug')
 
 
-@admin.register(ShoppingCart)
-class ShoppingCartAdmin(admin.ModelAdmin):
+class RecipeAdmin(admin.ModelAdmin):
+    list_display = (
+        'name', 'author', 'pub_date',
+    )
+    list_filter = ('name', 'author',)
+    search_fields = ('name',)
+    inlines = (IngredientsInLine,)
+
+
+class ShopListAdmin(admin.ModelAdmin):
     list_display = ('user', 'recipe')
-    list_filter = ('user', 'recipe')
+
+
+admin.site.register(Ingredient, IngredientAdmin)
+admin.site.register(IngredientInRecipe, IngredienInRecipeAdmin)
+admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(Tag, TagAdmin)
+admin.site.register(Recipe, RecipeAdmin)
+admin.site.register(ShopList, ShopListAdmin)
+admin.site.unregister(Group)

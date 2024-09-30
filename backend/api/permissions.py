@@ -1,15 +1,12 @@
-from rest_framework import permissions, status
-from rest_framework.exceptions import APIException
+from rest_framework import permissions
 
 
-class IsAuthorOrReadOnly(permissions.BasePermission):
+class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return (request.method in permissions.SAFE_METHODS
+                or request.user.is_authenticated)
+
     def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return obj.author == request.user
-
-
-class PermissionDenied(APIException):
-    status_code = status.HTTP_401_UNAUTHORIZED
-    default_detail = 'Нет авторизации'
-    default_code = 'Unauthorized'
+        return (request.method in permissions.SAFE_METHODS
+                or obj.author == request.user
+                or request.user.is_superuser)
