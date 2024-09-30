@@ -75,7 +75,7 @@ DATABASES = {
 #        'PORT': os.getenv('DB_PORT', 5432)
 #    }
 
-#}
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
