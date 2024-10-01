@@ -31,7 +31,6 @@ services:
       - static:/frontend_static
     depends_on:
       - db
-
   gateway:
     build: ./infra/
     env_file: .env
