@@ -4,6 +4,7 @@ volumes:
   pg_data:
   static:
   media:
+  django_static:
 
 services:
   db:
@@ -18,19 +19,20 @@ services:
     build: ./backend/
     env_file: .env
     volumes:
-      - static:/backend_static
+      - django_static:/app/collected_static
       - media:/app/media/
     depends_on:
       - db
 
+
   frontend:
     env_file: .env
     build: ./frontend/
-    command: cp -r /app/build/. /frontend_static/
     volumes:
-      - static:/frontend_static
+      - static:/app/build/
     depends_on:
       - db
+
   gateway:
     build: ./infra/
     env_file: .env
@@ -38,6 +40,7 @@ services:
       - 8000:80
     volumes:
       - static:/staticfiles/
+      - django_static:/staticfiles/build/static
       - media:/app/media/
     depends_on:
       - backend
