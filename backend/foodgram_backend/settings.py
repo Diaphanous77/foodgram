@@ -11,9 +11,9 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 
 DEBUG = os.getenv('DEBUG')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS')
+ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost', '158.160.2.164',]
 
-CSRF_TRUSTED_ORIGINS = os.getenv('CSRF')
+CSRF_TRUSTED_ORIGINS = ['https://diapfoodgram.sytes.net']
 
 INSTALLED_APPS = [
     'rest_framework',
