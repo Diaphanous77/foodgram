@@ -9,11 +9,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-DEBUG = True
+DEBUG =os.getenv('DEBUG')
 
-ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost', '158.160.2.164',]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS')
 
-CSRF_TRUSTED_ORIGINS = ['https://diapfoodgram.sytes.net']
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF')
 
 INSTALLED_APPS = [
     'rest_framework',
