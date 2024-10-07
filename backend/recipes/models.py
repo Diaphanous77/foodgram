@@ -1,11 +1,15 @@
-import shortuuid
-from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
+from django.core.validators import RegexValidator, MinValueValidator
 from users.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
+import shortuuid
 
 
 class Ingredient(models.Model):
+    """Ингредиенты и их количество для составления рецепта
+       с указанием единиц измерения.
+    """
     name = models.CharField(
         'Название ингредиента',
         max_length=200,
@@ -19,7 +23,10 @@ class Ingredient(models.Model):
     amount = models.IntegerField(
         'Количество ингредиентов в данном рецепте',
         null=True,
-        validators=[MinValueValidator(1)]
+        validators=[
+            MaxValueValidator(700),
+            MinValueValidator(1)
+        ]
     )
 
     class Meta:
@@ -31,6 +38,7 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
+    """Тэги."""
     name = models.CharField(
         'Тэг',
         unique=True,
@@ -48,6 +56,7 @@ class Tag(models.Model):
 
 
 class Recipe(models.Model):
+    """Рецепт."""
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -115,6 +124,7 @@ class Recipe(models.Model):
 
 
 class IngredientInRecipe(models.Model):
+    """Связь рецепта и ингредиентов."""
     recipe = models.ForeignKey(
         Recipe,
         related_name='IngredientInRecipe',
@@ -129,6 +139,7 @@ class IngredientInRecipe(models.Model):
         'Количество ингредиентов в данном рецепте',
         null=False,
         validators=[
+            MaxValueValidator(700, "Кол-во не может быть более 700"),
             MinValueValidator(1, "Кол-во не может быть меньше 1")
         ]
     )
@@ -136,12 +147,14 @@ class IngredientInRecipe(models.Model):
     class Meta:
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецепте'
+        unique_together = ('recipe', 'ingredient')
 
     def __str__(self):
         return f'{self.ingredient.name} в рецепте {self.recipe.name}'
 
 
 class Favorite(models.Model):
+    """Избанное."""
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -165,6 +178,7 @@ class Favorite(models.Model):
 
 
 class ShopList(models.Model):
+    """Список покупок."""
     user = models.ForeignKey(
         User,
         related_name='ShoppingRecipe',

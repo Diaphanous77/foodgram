@@ -1,28 +1,31 @@
 from django.contrib import admin
 from recipes.models import Favorite, ShopList
-
-from .models import Subscription, User
+from .models import User, Subscription
 
 
 class SubsInLine(admin.TabularInline):
+    """Подписки"""
     model = Subscription
     fk_name = 'user'
     extra = 1
 
 
 class FavoriteInLine(admin.TabularInline):
+    """Избранное"""
     model = Favorite
     fk_name = 'user'
     extra = 1
 
 
 class ShoplistInLine(admin.TabularInline):
+    """Покупки"""
     model = ShopList
     fk_name = 'user'
     extra = 1
 
 
 class UserAdmin(admin.ModelAdmin):
+    """Пользователи"""
     list_display = (
         'id',
         'username',
@@ -30,7 +33,6 @@ class UserAdmin(admin.ModelAdmin):
         'first_name',
         'last_name',
         'password',
-        'role',
     )
     search_fields = ('username',)
     list_filter = ('username', 'email')
@@ -38,6 +40,7 @@ class UserAdmin(admin.ModelAdmin):
 
 
 class SubscriptionAdmin(admin.ModelAdmin):
+    """Подписки пользователя"""
     list_display = ('user', 'author')
 
 

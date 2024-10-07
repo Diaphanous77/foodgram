@@ -4,10 +4,17 @@ from rest_framework.filters import SearchFilter
 
 
 class IngredientFilter(SearchFilter):
+    """Фильтра для ингредиентов."""
     search_param = 'name'
+    # name = filters.CharFilter(lookup_expr='icontains', field_name='name')
+
+    # class Meta:
+    #     model = Ingredient
+    #     fields = ('name',)
 
 
 class RecipeFilter(filters.FilterSet):
+    """Фильтр для рецептов по избранному, списку покупок, автору и тэгам."""
     author = filters.CharFilter()
     tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',

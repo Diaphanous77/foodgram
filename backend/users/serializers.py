@@ -1,11 +1,12 @@
-from djoser.serializers import UserCreateSerializer, UserSerializer
-from recipes.models import Recipe
+from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
-from users.models import Subscription, User
+from users.models import User, Subscription
+from recipes.models import Recipe
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
+    '''Сериализатор для отображения краткой информации о рецептах.'''
 
     class Meta:
         model = Recipe
@@ -18,6 +19,7 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
 
 class UserGetSerializer(UserSerializer):
+    """Сериализатор для просмотра профиля пользователя."""
     is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -42,6 +44,7 @@ class UserGetSerializer(UserSerializer):
 
 
 class UserWithRecipesSerializer(UserGetSerializer):
+    """Сериализатор для просмотра пользователя с рецептами."""
     recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
 
@@ -81,6 +84,7 @@ class UserWithRecipesSerializer(UserGetSerializer):
 
 
 class UserPostSerializer(UserCreateSerializer):
+    """Сериализатор для создания пользователя."""
     class Meta:
         model = User
         fields = ('id',
@@ -99,3 +103,14 @@ class UserPostSerializer(UserCreateSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
+class UserAvatarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar']
+
+    def update(self, instance, validated_data):
+        instance.avatar = validated_data.get('avatar', instance.avatar)
+        instance.save()
+        return instance

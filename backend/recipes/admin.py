@@ -1,8 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
-
-from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                     ShopList, Tag)
+from .models import Ingredient, Tag, Recipe, IngredientInRecipe, Favorite, ShopList
 
 
 class IngredientsInLine(admin.TabularInline):
@@ -10,22 +8,27 @@ class IngredientsInLine(admin.TabularInline):
 
 
 class IngredientAdmin(admin.ModelAdmin):
+    """Ингредиенты"""
     list_display = ('pk', 'name', 'measurement_unit')
 
 
 class IngredienInRecipeAdmin(admin.ModelAdmin):
+    """Ингредиенты в рецептах"""
     list_display = ('recipe', 'ingredient', 'amount')
 
 
 class FavoriteAdmin(admin.ModelAdmin):
+    """Избранные пельмени"""
     list_display = ('user', 'recipe')
 
 
 class TagAdmin(admin.ModelAdmin):
+    """ Настройка отображения тэгов в админке"""
     list_display = ('pk', 'name', 'slug')
 
 
 class RecipeAdmin(admin.ModelAdmin):
+    """Рецепты"""
     list_display = (
         'name', 'author', 'pub_date',
     )
@@ -35,6 +38,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 
 class ShopListAdmin(admin.ModelAdmin):
+    """Покупки"""
     list_display = ('user', 'recipe')
 
 

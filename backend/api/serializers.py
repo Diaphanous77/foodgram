@@ -1,37 +1,15 @@
-import base64
-
-from django.core.files.base import ContentFile
-from django.core.validators import MinValueValidator
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShopList, Tag)
 from rest_framework import serializers
+from recipes.models import (Ingredient, Tag, Recipe,
+                            IngredientInRecipe, Favorite, ShopList)
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 from users.models import Subscription
 from users.serializers import UserGetSerializer
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
-
-
-class RecipeShortSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time'
-        )
+from api.fields import Base64ImageField
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор для подписок."""
     user = serializers.PrimaryKeyRelatedField(
         read_only=True, default=serializers.CurrentUserDefault()
     )
@@ -54,6 +32,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Ingredient."""
     class Meta:
         model = Ingredient
         fields = ('id',
@@ -63,6 +42,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    """Сериализатор для отображения ингредиентов в рецептах."""
     id = serializers.PrimaryKeyRelatedField(
         queryset=Ingredient.objects.all(),
         source='ingredient.id'
@@ -76,8 +56,11 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
         read_only=True
     )
     amount = serializers.IntegerField(
+        # source='ingredientinrecipe.amount',
+        # read_only=True,
         validators=[
             MinValueValidator(1, message='Кол-во не может быть меньше 1'),
+            MaxValueValidator(700, message='Кол-во не может быть более 700')
         ]
     )
 
@@ -90,6 +73,7 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
 
 
 class TagSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Tag."""
     class Meta:
         model = Tag
         fields = ('id',
@@ -98,6 +82,9 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class RecipeGetSerializer(serializers.ModelSerializer):
+    """Сериализатор для модели Recipe и GET запросов к /recipe/
+    /recipe/id/.
+    """
     tags = TagSerializer(many=True, read_only=True)
     author = UserGetSerializer()
     ingredients = IngredientInRecipeSerializer(
@@ -133,6 +120,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_slug_url(self, obj):
+        """Генерирует полный URL для поля slug."""
         request = self.context.get('request')
         if request is None:
             return None
@@ -140,6 +128,7 @@ class RecipeGetSerializer(serializers.ModelSerializer):
 
 
 class RecipePostSerializer(serializers.ModelSerializer):
+    """Модель для создания рецептов."""
     author = UserGetSerializer(
         read_only=True,
         default=serializers.CurrentUserDefault()
@@ -160,6 +149,7 @@ class RecipePostSerializer(serializers.ModelSerializer):
         required=False,
         validators=[
             MinValueValidator(1, message='Кол-во не может быть меньше 1'),
+            MaxValueValidator(700, message='Кол-во не может быть более 700')
         ]
     )
 
@@ -220,9 +210,21 @@ class RecipePostSerializer(serializers.ModelSerializer):
             context={'request': self.context.get('request')}
         )
         return serializer.data
+    
+    def validate_ingredients(self, ingredients):
+        ingredient_ids = [ingredient['ingredient']['id'] for ingredient in ingredients]
+        if len(ingredient_ids) != len(set(ingredient_ids)):
+            raise serializers.ValidationError('Ингредиенты не должны дублироваться.')
+        return ingredients
+
+    def validate_tags(self, tags):
+        if len(tags) != len(set(tags)):
+            raise serializers.ValidationError('Теги не должны дублироваться.')
+        return tags
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    """Сериализатор для избранных рецептов."""
     user = serializers.PrimaryKeyRelatedField(
         read_only=True, default=serializers.CurrentUserDefault())
     recipe = serializers.PrimaryKeyRelatedField(
@@ -247,6 +249,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class ShoppingListSerializer(serializers.ModelSerializer):
+    """Сериализатор для списка покупок."""
     user = serializers.PrimaryKeyRelatedField(
         read_only=True, default=serializers.CurrentUserDefault()
     )

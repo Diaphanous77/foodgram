@@ -1,15 +1,15 @@
-from api.pagination import MyPagination
-from api.permissions import IsAuthorOrAdminOrReadOnly
+from rest_framework import viewsets, status, mixins
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from users.models import Subscription, User
-from users.serializers import (UserGetSerializer, UserPostSerializer,
-                               UserWithRecipesSerializer)
+from users.models import User, Subscription
+from users.serializers import (UserPostSerializer, UserGetSerializer, UserAvatarSerializer, 
+                              UserWithRecipesSerializer)
+from api.pagination import CustomPagination
+from api.permissions import IsAuthorOrAdminOrReadOnly
 
 
 class UserViewSet(mixins.CreateModelMixin,
@@ -17,12 +17,14 @@ class UserViewSet(mixins.CreateModelMixin,
                   mixins.RetrieveModelMixin,
                   viewsets.GenericViewSet,):
     queryset = User.objects.all()
-    pagination_class = MyPagination
+    pagination_class = CustomPagination
 
     def get_instance(self):
         return self.request.user
 
     def get_serializer_class(self):
+        if self.action == 'avatar':
+            return UserAvatarSerializer
         if self.action in ['subscriptions', 'subscribe']:
             return UserWithRecipesSerializer
         elif self.request.method == 'GET':
@@ -55,7 +57,7 @@ class UserViewSet(mixins.CreateModelMixin,
         )
         serializer.is_valid(raise_exception=True)
 
-        self.request.user.set_password(serializer.data['new_password'])
+        self.request.user.set_password(serializer.validated_data['new_password'])
         self.request.user.save()
 
         update_session_auth_hash(self.request, self.request.user)
@@ -93,14 +95,25 @@ class UserViewSet(mixins.CreateModelMixin,
     def subscribe(self, request, pk):
         user = self.request.user
         author = get_object_or_404(User, id=pk)
-        subscription = user.follower.filter(author=author)
 
         if request.method == 'POST':
-            Subscription.objects.create(user=user, author=author)
+            Subscription.objects.get_or_create(user=user, author=author)
             serializer = self.get_serializer(author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        if request.method == 'DELETE':
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        subscription = get_object_or_404(Subscription, user=user, author=author)
+        subscription.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated, ],
+        methods=['PUT'],
+        url_path='me/avatar'
+    )
+    def avatar(self, request, *args, **kwargs):
+        user = self.get_instance()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
