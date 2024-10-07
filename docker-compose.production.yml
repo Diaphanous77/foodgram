@@ -3,6 +3,7 @@ version: '3'
 volumes:
   pg_data:
   static:
+  django_static:
   media:
 
 services:
