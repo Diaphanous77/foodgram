@@ -1,15 +1,15 @@
-from api.pagination import CustomPagination
-from api.permissions import IsAuthorOrAdminOrReadOnly
+from rest_framework import viewsets, status, mixins
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
 from django.contrib.auth import update_session_auth_hash
 from django.shortcuts import get_object_or_404
 from djoser.serializers import SetPasswordSerializer
-from rest_framework import mixins, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from users.models import Subscription, User
-from users.serializers import (UserAvatarSerializer, UserGetSerializer,
-                               UserPostSerializer, UserWithRecipesSerializer)
+from users.models import User, Subscription
+from users.serializers import (UserPostSerializer, UserGetSerializer, UserAvatarSerializer, 
+                              UserWithRecipesSerializer)
+from api.pagination import CustomPagination
+from api.permissions import IsAuthorOrAdminOrReadOnly
 
 
 class UserViewSet(mixins.CreateModelMixin,
@@ -57,9 +57,7 @@ class UserViewSet(mixins.CreateModelMixin,
         )
         serializer.is_valid(raise_exception=True)
 
-        self.request.user.set_password(
-            serializer.validated_data['new_password']
-        )
+        self.request.user.set_password(serializer.validated_data['new_password'])
         self.request.user.save()
 
         update_session_auth_hash(self.request, self.request.user)
@@ -103,9 +101,7 @@ class UserViewSet(mixins.CreateModelMixin,
             serializer = self.get_serializer(author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        subscription = get_object_or_404(
-            Subscription, user=user, author=author
-        )
+        subscription = get_object_or_404(Subscription, user=user, author=author)
         subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

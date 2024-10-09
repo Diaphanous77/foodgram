@@ -1,8 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import Group
-
-from .models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                     ShopList, Tag)
+from .models import Ingredient, Tag, Recipe, IngredientInRecipe, Favorite, ShopList
 
 
 class IngredientsInLine(admin.TabularInline):

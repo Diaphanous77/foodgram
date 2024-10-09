@@ -1,21 +1,22 @@
-from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                             RecipeGetSerializer, RecipePostSerializer,
-                             ShoppingListSerializer, TagSerializer)
-from django.db.models import F, Sum
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShopList, Tag)
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
+from django.http import HttpResponse
+from django.db.models import F, Sum
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from recipes.models import (Tag, Recipe, Favorite,
+                            ShopList, IngredientInRecipe,
+                            Ingredient)
+from api.serializers import (IngredientSerializer, TagSerializer,
+                             RecipeGetSerializer, FavoriteSerializer,
+                             RecipePostSerializer, ShoppingListSerializer,
+                             )
 from users.serializers import RecipeShortSerializer
-
-from .filters import IngredientFilter, RecipeFilter
-from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
+from .pagination import CustomPagination
+from .filters import IngredientFilter, RecipeFilter
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -63,15 +64,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(["POST", "DELETE"], detail=True)
     def favorite(self, request, pk=None):
-        return self.add_or_remove_item(
-            request, pk, Favorite, FavoriteSerializer
-        )
+        return self.add_or_remove_item(request, pk, Favorite, FavoriteSerializer)
 
     @action(["POST", "DELETE"], detail=True)
     def shopping_cart(self, request, pk=None):
-        return self.add_or_remove_item(
-            request, pk, ShopList, ShoppingListSerializer
-        )
+        return self.add_or_remove_item(request, pk, ShopList, ShoppingListSerializer)
 
     @action(detail=False, permission_classes=[IsAuthenticated, ])
     def download_shopping_cart(self, request):
