@@ -15,7 +15,7 @@ router.register('recipes', RecipeViewSet, basename='recipes')
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/', include('djoser.urls.authtoken')),
-    path('recipe/<slug:slug>/',
+    path('recipes/<slug:slug>/',
          RecipeViewSet.as_view({'get': 'retrieve_by_slug'}),
          name='recipe-detail-by-slug'),
 ]
