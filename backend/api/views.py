@@ -1,21 +1,27 @@
-from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                             RecipeGetSerializer, RecipePostSerializer,
-                             ShoppingListSerializer, TagSerializer)
-from django.db.models import F, Sum
-from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShopList, Tag)
-from rest_framework import status, viewsets
-from rest_framework.decorators import action
+from django.http import HttpResponse
+from django.db.models import F, Sum
+from django.shortcuts import get_object_or_404
+from rest_framework import viewsets, status, mixins
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from recipes.models import (Tag, Recipe, Favorite,
+                            ShopList, IngredientInRecipe,
+                            Ingredient)
+from api.serializers import (IngredientSerializer, TagSerializer,
+                             RecipeGetSerializer, FavoriteSerializer,
+                             RecipePostSerializer, ShoppingListSerializer,
+                             )
 from users.serializers import RecipeShortSerializer
-
-from .filters import IngredientFilter, RecipeFilter
-from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
+from .pagination import CustomPagination
+from .filters import IngredientFilter, RecipeFilter
+from users.models import User, Subscription
+from users.serializers import (UserPostSerializer, UserGetSerializer, UserAvatarSerializer, 
+                              UserWithRecipesSerializer)
+from djoser.serializers import SetPasswordSerializer
+from django.contrib.auth import update_session_auth_hash
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -48,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipePostSerializer
 
     def add_or_remove_item(self, request, pk, model, serializer_class):
-        """метод для добавления и удаления объектов."""
+        """Метод для добавления и удаления объектов."""
         user = self.request.user
         recipe = get_object_or_404(Recipe, pk=pk)
 
@@ -63,15 +69,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(["POST", "DELETE"], detail=True)
     def favorite(self, request, pk=None):
-        return self.add_or_remove_item(
-            request, pk, Favorite, FavoriteSerializer
-        )
+        return self.add_or_remove_item(request, pk, Favorite, FavoriteSerializer)
 
     @action(["POST", "DELETE"], detail=True)
     def shopping_cart(self, request, pk=None):
-        return self.add_or_remove_item(
-            request, pk, ShopList, ShoppingListSerializer
-        )
+        return self.add_or_remove_item(request, pk, ShopList, ShoppingListSerializer)
 
     @action(detail=False, permission_classes=[IsAuthenticated, ])
     def download_shopping_cart(self, request):
@@ -98,4 +100,111 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def retrieve_by_slug(self, request, slug=None):
         recipe = get_object_or_404(Recipe, slug=slug)
         serializer = self.get_serializer(recipe)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserViewSet(mixins.CreateModelMixin,
+                  mixins.ListModelMixin,
+                  mixins.RetrieveModelMixin,
+                  viewsets.GenericViewSet,):
+    queryset = User.objects.all()
+    pagination_class = CustomPagination
+
+    def get_instance(self):
+        return self.request.user
+
+    def get_serializer_class(self):
+        if self.action == 'avatar':
+            return UserAvatarSerializer
+        if self.action in ['subscriptions', 'subscribe']:
+            return UserWithRecipesSerializer
+        elif self.request.method == 'GET':
+            return UserGetSerializer
+        elif self.request.method == 'POST':
+            return UserPostSerializer
+
+    def get_permissions(self):
+        if self.action == 'retrieve':
+            self.permission_classes = [IsAuthenticated, ]
+        return super(self.__class__, self).get_permissions()
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated, ]
+    )
+    def me(self, request, *args, **kwargs):
+        self.get_object = self.get_instance
+
+        return self.retrieve(request, *args, **kwargs)
+
+    @action(
+        ["POST"],
+        detail=False,
+        permission_classes=[IsAuthenticated, ]
+    )
+    def set_password(self, request, *args, **kwargs):
+        serializer = SetPasswordSerializer(
+            data=request.data, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+
+        self.request.user.set_password(serializer.validated_data['new_password'])
+        self.request.user.save()
+
+        update_session_auth_hash(self.request, self.request.user)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated, ]
+    )
+    def subscriptions(self, request):
+        users = User.objects.filter(
+            following__user=request.user
+        ).prefetch_related('recipes')
+        page = self.paginate_queryset(users)
+
+        if page is not None:
+            serializer = UserWithRecipesSerializer(
+                page, many=True,
+                context={'request': request})
+
+            return self.get_paginated_response(serializer.data)
+
+        serializer = UserWithRecipesSerializer(
+            users, many=True, context={'request': request}
+        )
+
+        return Response(serializer.data)
+
+    @action(
+        ["POST", "DELETE"],
+        detail=True,
+        permission_classes=[IsAuthorOrAdminOrReadOnly, ]
+    )
+    def subscribe(self, request, pk):
+        user = self.request.user
+        author = get_object_or_404(User, id=pk)
+
+        if request.method == 'POST':
+            Subscription.objects.get_or_create(user=user, author=author)
+            serializer = self.get_serializer(author)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        subscription = get_object_or_404(Subscription, user=user, author=author)
+        subscription.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=False,
+        permission_classes=[IsAuthenticated, ],
+        methods=['PUT'],
+        url_path='me/avatar'
+    )
+    def avatar(self, request, *args, **kwargs):
+        user = self.get_instance()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)

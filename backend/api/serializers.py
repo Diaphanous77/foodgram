@@ -1,10 +1,11 @@
-from api.fields import Base64ImageField
-from django.core.validators import MaxValueValidator, MinValueValidator
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShopList, Tag)
 from rest_framework import serializers
+from recipes.models import (Ingredient, Tag, Recipe,
+                            IngredientInRecipe, Favorite, ShopList)
+from django.core.validators import MaxValueValidator, MinValueValidator
+
 from users.models import Subscription
 from users.serializers import UserGetSerializer
+from api.fields import Base64ImageField
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -209,14 +210,11 @@ class RecipePostSerializer(serializers.ModelSerializer):
             context={'request': self.context.get('request')}
         )
         return serializer.data
-
+    
     def validate_ingredients(self, ingredients):
-        ingredient_ids = [ingredient['ingredient']['id'] for ingredient
-                          in ingredients]
+        ingredient_ids = [ingredient['ingredient']['id'] for ingredient in ingredients]
         if len(ingredient_ids) != len(set(ingredient_ids)):
-            raise serializers.ValidationError(
-                'Ингредиенты не должны дублироваться.'
-            )
+            raise serializers.ValidationError('Ингредиенты не должны дублироваться.')
         return ingredients
 
     def validate_tags(self, tags):

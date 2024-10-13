@@ -6,6 +6,11 @@ from rest_framework.filters import SearchFilter
 class IngredientFilter(SearchFilter):
     """Фильтра для ингредиентов."""
     search_param = 'name'
+    # name = filters.CharFilter(lookup_expr='icontains', field_name='name')
+
+    # class Meta:
+    #     model = Ingredient
+    #     fields = ('name',)
 
 
 class RecipeFilter(filters.FilterSet):

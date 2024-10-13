@@ -1,8 +1,9 @@
-import shortuuid
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
+from django.core.validators import RegexValidator, MinValueValidator
 from users.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
+import shortuuid
 
 
 class Ingredient(models.Model):

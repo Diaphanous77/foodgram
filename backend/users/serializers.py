@@ -1,8 +1,9 @@
-from djoser.serializers import UserCreateSerializer, UserSerializer
-from recipes.models import Recipe
+from djoser.serializers import UserSerializer, UserCreateSerializer
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
-from users.models import Subscription, User
+from users.models import User, Subscription
+from recipes.models import Recipe
+from api.fields import Base64ImageField
 
 
 class RecipeShortSerializer(serializers.ModelSerializer):
@@ -108,11 +109,9 @@ class UserPostSerializer(UserCreateSerializer):
 
 
 class UserAvatarSerializer(serializers.ModelSerializer):
+    """Сериализатор для обновления аватара пользователя."""
+    avatar = Base64ImageField(required=True)
+
     class Meta:
         model = User
         fields = ['avatar']
-
-    def update(self, instance, validated_data):
-        instance.avatar = validated_data.get('avatar', instance.avatar)
-        instance.save()
-        return instance

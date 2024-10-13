@@ -1,5 +1,5 @@
-from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 from django.db.models import UniqueConstraint
 
 
@@ -33,7 +33,7 @@ class User(AbstractUser):
     )
     avatar = models.ImageField(
         'Аватар',
-        upload_to='avatars/',
+        upload_to='users/avatars/',
         blank=True,
         null=True
     )
