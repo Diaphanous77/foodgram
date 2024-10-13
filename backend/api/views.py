@@ -1,27 +1,26 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from django.http import HttpResponse
+from api.serializers import (FavoriteSerializer, IngredientSerializer,
+                             RecipeGetSerializer, RecipePostSerializer,
+                             ShoppingListSerializer, TagSerializer)
+from django.contrib.auth import update_session_auth_hash
 from django.db.models import F, Sum
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, status, mixins
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.serializers import SetPasswordSerializer
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShopList, Tag)
+from rest_framework import mixins, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.decorators import action
-from recipes.models import (Tag, Recipe, Favorite,
-                            ShopList, IngredientInRecipe,
-                            Ingredient)
-from api.serializers import (IngredientSerializer, TagSerializer,
-                             RecipeGetSerializer, FavoriteSerializer,
-                             RecipePostSerializer, ShoppingListSerializer,
-                             )
-from users.serializers import RecipeShortSerializer
-from .permissions import IsAuthorOrAdminOrReadOnly
-from .pagination import CustomPagination
+from users.models import Subscription, User
+from users.serializers import (RecipeShortSerializer, UserAvatarSerializer,
+                               UserGetSerializer, UserPostSerializer,
+                               UserWithRecipesSerializer)
+
 from .filters import IngredientFilter, RecipeFilter
-from users.models import User, Subscription
-from users.serializers import (UserPostSerializer, UserGetSerializer, UserAvatarSerializer, 
-                              UserWithRecipesSerializer)
-from djoser.serializers import SetPasswordSerializer
-from django.contrib.auth import update_session_auth_hash
+from .pagination import CustomPagination
+from .permissions import IsAuthorOrAdminOrReadOnly
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -69,11 +68,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(["POST", "DELETE"], detail=True)
     def favorite(self, request, pk=None):
-        return self.add_or_remove_item(request, pk, Favorite, FavoriteSerializer)
+        return self.add_or_remove_item(
+            request, pk, Favorite, FavoriteSerializer
+        )
 
     @action(["POST", "DELETE"], detail=True)
     def shopping_cart(self, request, pk=None):
-        return self.add_or_remove_item(request, pk, ShopList, ShoppingListSerializer)
+        return self.add_or_remove_item(
+            request, pk, ShopList, ShoppingListSerializer
+        )
 
     @action(detail=False, permission_classes=[IsAuthenticated, ])
     def download_shopping_cart(self, request):
@@ -148,7 +151,9 @@ class UserViewSet(mixins.CreateModelMixin,
         )
         serializer.is_valid(raise_exception=True)
 
-        self.request.user.set_password(serializer.validated_data['new_password'])
+        self.request.user.set_password(
+            serializer.validated_data['new_password']
+        )
         self.request.user.save()
 
         update_session_auth_hash(self.request, self.request.user)
@@ -192,7 +197,9 @@ class UserViewSet(mixins.CreateModelMixin,
             serializer = self.get_serializer(author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-        subscription = get_object_or_404(Subscription, user=user, author=author)
+        subscription = get_object_or_404(
+            Subscription, user=user, author=author
+        )
         subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

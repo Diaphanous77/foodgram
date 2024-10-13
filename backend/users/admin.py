@@ -1,6 +1,7 @@
 from django.contrib import admin
 from recipes.models import Favorite, ShopList
-from .models import User, Subscription
+
+from .models import Subscription, User
 
 
 class SubsInLine(admin.TabularInline):
