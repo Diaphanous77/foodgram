@@ -9,7 +9,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 
-DEBUG = os.getenv('DEBUG')
+
+def get_debug_value():
+    debug_value: str = os.getenv('DEBUG', 'True')
+    if isinstance(debug_value, str):
+        if debug_value.lower() in ['true', '1', 't']:
+            return True
+        elif debug_value.lower() in ['false', '0', 'f']:
+            return False
+    return True
+
+
+DEBUG = get_debug_value()
 
 ALLOWED_HOSTS = ['diapfoodgram.sytes.net', '127.0.0.1', 'localhost', '158.160.2.164',]
 

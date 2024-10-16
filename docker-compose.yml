@@ -18,8 +18,10 @@ services:
   backend:
     build: ./backend/
     env_file: .env
+    command: "python manage.py runserver 0.0.0.0:8000"
     volumes:
       - django_static:/app/collected_static
+      - ./backend:/app
       - media:/app/media/
     depends_on:
       - db

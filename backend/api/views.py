@@ -1,6 +1,9 @@
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                             RecipeGetSerializer, RecipePostSerializer,
-                             ShoppingListSerializer, TagSerializer)
+                            RecipeGetSerializer, RecipePostSerializer,
+                            ShoppingListSerializer, TagSerializer,
+                            RecipeShortSerializer, UserAvatarSerializer,
+                            UserGetSerializer, UserPostSerializer,
+                            UserWithRecipesSerializer)
 from django.contrib.auth import update_session_auth_hash
 from django.db.models import F, Sum
 from django.http import HttpResponse
@@ -13,10 +16,8 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.request import Request
 from users.models import Subscription, User
-from users.serializers import (RecipeShortSerializer, UserAvatarSerializer,
-                               UserGetSerializer, UserPostSerializer,
-                               UserWithRecipesSerializer)
 
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
@@ -51,6 +52,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeShortSerializer
         elif self.request.method in ['POST', 'PATCH']:
             return RecipePostSerializer
+    
+    def get_queryset(self):
+        request: Request = self.request
+        if (is_in_shopping_cart := request.query_params.get("is_in_shopping_cart")) is not None:
+            if is_in_shopping_cart == '1':
+                return super().get_queryset().filter(shopping_cart__user=request.user)
+        return super().get_queryset()
 
     def add_or_remove_item(self, request, pk, model, serializer_class):
         """Метод для добавления и удаления объектов."""
@@ -85,7 +93,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             recipe__shopping_cart__user=user).values(
             name=F('ingredient__name'),
             measurement_unit=F('ingredient__measurement_unit')).annotate(
-            amount_total=Sum('amount')
+            total_amount=Sum('amount')
         )
         data = []
         for ingredient in ingredients:

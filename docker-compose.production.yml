@@ -14,10 +14,12 @@ services:
       - pg_data:/var/lib/postgresql/data
 
   backend:
-    image: diaphanous/foodgram_backend
+    build: ./backend/
     env_file: .env
+    command: "gunicorn --bind 0.0.0.0:8000 foodgram_backend.wsgi"
     volumes:
       - django_static:/app/collected_static
+      - ./backend:/app
       - media:/app/media/
     depends_on:
       - db
