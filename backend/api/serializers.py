@@ -1,15 +1,13 @@
 from api.fields import Base64ImageField
 from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db.models import Model, Q
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
                             ShopList, Tag)
-from rest_framework import serializers
-from users.models import Subscription
-from django.db.models import Model, Q
-from rest_framework.response import Response
-from users.models import User
-from djoser.serializers import UserCreateSerializer, UserSerializer
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
+from users.models import Subscription, User
 
 
 class UserGetSerializer(UserSerializer):
@@ -205,23 +203,29 @@ class RecipeGetSerializer(serializers.ModelSerializer):
                   'name', 'image', 'text', 'cooking_time', 'slug',
                   'slug_url',)
 
-    def is_obj_exists_if_not_anonymous(self, model: Model, filter_query: Q) -> bool:
+    def is_obj_exists_if_not_anonymous(
+        self, model: Model, filter_query: Q
+    ) -> bool:
         request = self.context.get("request")
         if request.user.is_anonymous:
             return False
         return model.objects.filter(filter_query).exists()
-    
+
     def get_request(self) -> Response:
         return self.context.get("request")
-    
+
     def get_user(self):
         return self.get_request().user
 
     def get_is_favorited(self, obj):
-        return self.is_obj_exists_if_not_anonymous(Favorite, Q(recipe=obj) & Q(user=self.get_user()))
+        return self.is_obj_exists_if_not_anonymous(
+            Favorite, Q(recipe=obj) & Q(user=self.get_user())
+        )
 
     def get_is_in_shopping_cart(self, obj):
-        return self.is_obj_exists_if_not_anonymous(ShopList, Q(recipe=obj) & Q(user=self.get_user()))
+        return self.is_obj_exists_if_not_anonymous(
+            ShopList, Q(recipe=obj) & Q(user=self.get_user())
+        )
 
     def get_slug_url(self, obj):
         """Генерирует полный URL для поля slug."""
@@ -296,9 +300,9 @@ class RecipePostSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('IngredientInRecipe', [])
         tags = validated_data.pop('tags', [])
-        
+
         super().update(instance, validated_data)
-        
+
         instance.tags.clear()
         instance.tags.add(*tags)
 
@@ -307,7 +311,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
 
     def to_representation(self, instance):
         serializer = RecipeGetSerializer(

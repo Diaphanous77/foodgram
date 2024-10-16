@@ -1,9 +1,9 @@
 from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                            RecipeGetSerializer, RecipePostSerializer,
-                            ShoppingListSerializer, TagSerializer,
-                            RecipeShortSerializer, UserAvatarSerializer,
-                            UserGetSerializer, UserPostSerializer,
-                            UserWithRecipesSerializer)
+                             RecipeGetSerializer, RecipePostSerializer,
+                             RecipeShortSerializer, ShoppingListSerializer,
+                             TagSerializer, UserAvatarSerializer,
+                             UserGetSerializer, UserPostSerializer,
+                             UserWithRecipesSerializer)
 from django.contrib.auth import update_session_auth_hash
 from django.db.models import F, Sum
 from django.http import HttpResponse
@@ -15,8 +15,8 @@ from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
 from rest_framework.request import Request
+from rest_framework.response import Response
 from users.models import Subscription, User
 
 from .filters import IngredientFilter, RecipeFilter
@@ -52,12 +52,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeShortSerializer
         elif self.request.method in ['POST', 'PATCH']:
             return RecipePostSerializer
-    
+
     def get_queryset(self):
         request: Request = self.request
-        if (is_in_shopping_cart := request.query_params.get("is_in_shopping_cart")) is not None:
+        if (is_in_shopping_cart := request.query_params.get(
+                "is_in_shopping_cart")) is not None:
             if is_in_shopping_cart == '1':
-                return super().get_queryset().filter(shopping_cart__user=request.user)
+                return super().get_queryset().filter(
+                    shopping_cart__user=request.user
+                )
         return super().get_queryset()
 
     def add_or_remove_item(self, request, pk, model, serializer_class):
