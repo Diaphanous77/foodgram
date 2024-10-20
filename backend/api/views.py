@@ -1,24 +1,22 @@
-from api.serializers import (FavoriteSerializer, IngredientSerializer,
-                             RecipeGetSerializer, RecipePostSerializer,
-                             RecipeShortSerializer, ShoppingListSerializer,
-                             TagSerializer, UserAvatarSerializer,
-                             UserGetSerializer, UserPostSerializer,
-                             UserWithRecipesSerializer)
 from django.contrib.auth import update_session_auth_hash
 from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.serializers import SetPasswordSerializer
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShopList, Tag)
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.request import Request
 from rest_framework.response import Response
 from users.models import Subscription, User
-
+from api.serializers import (FavoriteSerializer, IngredientSerializer,
+                             RecipeGetSerializer, RecipePostSerializer,
+                             RecipeShortSerializer, ShoppingListSerializer,
+                             TagSerializer, UserAvatarSerializer,
+                             UserGetSerializer, UserPostSerializer,
+                             UserWithRecipesSerializer)
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShopList, Tag)
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import CustomPagination
 from .permissions import IsAuthorOrAdminOrReadOnly
@@ -39,10 +37,10 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all()
+    queryset = Recipe.objects.all().prefetch_related("tags")
     permission_classes = [IsAuthorOrAdminOrReadOnly, ]
     filter_backends = (DjangoFilterBackend,)
-    filter_class = RecipeFilter
+    filterset_class  = RecipeFilter
     pagination_class = CustomPagination
 
     def get_serializer_class(self):
@@ -52,16 +50,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeShortSerializer
         elif self.request.method in ['POST', 'PATCH']:
             return RecipePostSerializer
-
-    def get_queryset(self):
-        request: Request = self.request
-        if (is_in_shopping_cart := request.query_params.get(
-                "is_in_shopping_cart")) is not None:
-            if is_in_shopping_cart == '1':
-                return super().get_queryset().filter(
-                    shopping_cart__user=request.user
-                )
-        return super().get_queryset()
 
     def add_or_remove_item(self, request, pk, model, serializer_class):
         """Метод для добавления и удаления объектов."""

@@ -2,6 +2,7 @@ import shortuuid
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import UniqueConstraint
+
 from users.models import User
 
 
@@ -114,7 +115,6 @@ class Recipe(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            # генерация короткой ссылки
             self.slug = shortuuid.uuid()
         super().save(*args, **kwargs)
 
