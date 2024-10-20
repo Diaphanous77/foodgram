@@ -1,13 +1,14 @@
-from api.fields import Base64ImageField
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db.models import Model, Q
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
-                            ShopList, Tag)
 from rest_framework import serializers, status
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+
 from users.models import Subscription, User
+from api.fields import Base64ImageField
+from recipes.models import (Favorite, Ingredient, IngredientInRecipe, Recipe,
+                            ShopList, Tag)
 
 
 class UserGetSerializer(UserSerializer):
@@ -70,7 +71,7 @@ class UserWithRecipesSerializer(UserGetSerializer):
         request = self.context.get('request')
         context = {'request': request}
         recipe_limit = request.query_params.get('recipe_limit')
-        queryset = object.recipes.all()
+        queryset = object.recipes.all()[:3]
         if recipe_limit:
             queryset = queryset[:int(recipe_limit)]
         return RecipeShortSerializer(queryset, context=context, many=True).data
@@ -309,7 +310,6 @@ class RecipePostSerializer(serializers.ModelSerializer):
         instance.ingredients.clear()
         self.save_ingredients(instance, ingredients)
 
-        instance.save()
         return instance
 
     def to_representation(self, instance):
