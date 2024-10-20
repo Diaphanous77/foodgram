@@ -102,7 +102,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         for ingredient in ingredients:
             data.append(
                 f'{ingredient["name"]} - '
-                f'{ingredient["amount"]} '
+                f'{ingredient["total_amount"]} '
                 f'{ingredient["measurement_unit"]}'
             )
         content = 'Список покупок: \n\n' + '\n'.join(data)
